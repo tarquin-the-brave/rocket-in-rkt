@@ -8,14 +8,18 @@ publish = ["metaswitch"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# Pre-release versions needed for /domath implementation
+failure = "0.1.6"
+futures = "0.3"
 rocket = "0.4.2"
 rocket_contrib = "0.4.2"
-serde = "1.0.103"
 reqwest = "0.10.0-alpha.1"
-old_reqwest = { version = "0.9", package = "reqwest" }
-futures = "0.3"
-old_futures = { version = "0.1", package = "futures"}
-serde_json = "1.0.42"
+serde = "1.0.103"
 serde_derive = "1.0.103"
-tokio = "0.1.22"
-failure = "0.1.6"
+serde_json = "1.0.42"
+tokio = "0.2.0-alpha.6"
+
+# For the /math endpoint using fully released crates.
+old_reqwest = { version = "0.9", package = "reqwest" }
+old_futures = { version = "0.1", package = "futures"}
+old_tokio = { version = "0.1.22", package = "tokio" }

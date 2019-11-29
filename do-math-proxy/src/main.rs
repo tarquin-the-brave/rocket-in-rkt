@@ -10,7 +10,6 @@ mod farm_out_hard_work {
     use rocket::request::Form;
     use rocket::response::content;
     use futures::try_join;
-    use futures::executor::block_on;
     use failure::format_err;
     use old_futures::future::Future;
 
@@ -35,8 +34,31 @@ mod farm_out_hard_work {
         }
     }
 
-    #[get("/math?<homework..>")]
-    pub(crate) fn math(homework: Form<Input>) -> content::Json<String> {
+    #[get("/domath?<homework..>")]
+    pub(crate) fn do_math(homework: Form<Input>) -> content::Json<String> {
+        // We call out to our other server to find LCM & HCF
+        // of the two numbers.
+        let results = async {
+            let lcm = reqwest::get(&format!("http://localhost:8000/lcm/{}/{}", homework.x, homework.y))
+                .await?
+                .error_for_status()?
+                .text();
+
+            let hcf = reqwest::get(&format!("http://localhost:8000/hcf/{}/{}", homework.x, homework.y))
+                .await?
+                .error_for_status()?
+                .text();
+
+            try_join!(lcm, hcf)
+        };
+
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let results = Output::from_tuple(rt.block_on(results).unwrap());
+        content::Json(serde_json::to_string(&results).unwrap())
+    }
+
+    #[get("/domath_old?<homework..>")]
+    pub(crate) fn do_math_old(homework: Form<Input>) -> content::Json<String> {
         // We call out to our other server to find LCM & HCF
         // of the two numbers.
         let client = old_reqwest::r#async::Client::new();
@@ -56,30 +78,8 @@ mod farm_out_hard_work {
 
 	let results = lcm.join(hcf);
 
-	let mut rt = tokio::runtime::Runtime::new().unwrap();
+	let mut rt = old_tokio::runtime::Runtime::new().unwrap();
 	let results = Output::from_tuple(rt.block_on(results).unwrap());
-        content::Json(serde_json::to_string(&results).unwrap())
-    }
-
-    // TODO: This doesn't work...  I can't use the core executor run time.
-    // We get a "no run time" error.  Use /math above for now.
-    #[get("/domath?<homework..>")]
-    pub(crate) fn do_math(homework: Form<Input>) -> content::Json<String> {
-        // We call out to our other server to find LCM & HCF
-        // of the two numbers.
-        let results = async {
-            let lcm = reqwest::get(&format!("http://localhost:8000/lcm/{}/{}", homework.x, homework.y))
-                .await?.text();
-
-            let hcf = reqwest::get(&format!("http://localhost:8000/hcf/{}/{}", homework.x, homework.y))
-                .await?.text();
-
-            try_join!(lcm, hcf)
-            };
-
-        // let mut rt = tokio::runtime::Runtime::new().unwrap();
-        // let results = Output::from_tuple(rt.block_on(results).unwrap());
-        let results = Output::from_tuple(block_on(results).unwrap());
         content::Json(serde_json::to_string(&results).unwrap())
     }
 
@@ -87,7 +87,7 @@ mod farm_out_hard_work {
 
 fn main() {
     rocket::ignite()
-        .mount("/", routes![farm_out_hard_work::math,farm_out_hard_work::do_math,])
+        .mount("/", routes![farm_out_hard_work::do_math_old,farm_out_hard_work::do_math,])
 	.mount("/hi", StaticFiles::from("static"))
         .launch();
 }
