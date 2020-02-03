@@ -13,11 +13,11 @@ failure = "0.1.6"
 futures = "0.3"
 rocket = "0.4.2"
 rocket_contrib = "0.4.2"
-reqwest = "0.10.0-alpha.1"
+reqwest = "0.10"
 serde = "1.0.103"
 serde_derive = "1.0.103"
 serde_json = "1.0.42"
-tokio = "0.2.0-alpha.6"
+tokio = "0.2"
 
 # For the /math endpoint using fully released crates.
 old_reqwest = { version = "0.9", package = "reqwest" }

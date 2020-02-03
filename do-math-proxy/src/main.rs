@@ -52,7 +52,7 @@ mod farm_out_hard_work {
             try_join!(lcm, hcf)
         };
 
-        let rt = tokio::runtime::Runtime::new().unwrap();
+        let mut rt = tokio::runtime::Runtime::new().unwrap();
         let results = Output::from_tuple(rt.block_on(results).unwrap());
         content::Json(serde_json::to_string(&results).unwrap())
     }
